@@ -31,15 +31,15 @@ app.use('/api/v1', authRoutes);
 
 // Start server after DB connection
 connectToDatabase()
-    .then(() => {
-        app.listen(process.env.PORT, () => {
-            console.log(`✅ Connected to MongoDB: ${process.env.DB_NAME}`);
-            console.log(`🚀 App is listening on port ${process.env.PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.error('❌ Database connection error:', error);
-        process.exit(1);
+  .then(() => {
+    app.listen(process.env.PORT, () => {
+      console.log(`✅ Connected to MongoDB: ${process.env.DB_NAME}`);
+      console.log(`🚀 App is listening on port ${process.env.PORT}`);
     });
+  })
+  .catch(error => {
+    console.error('❌ Database connection error:', error);
+    process.exit(1);
+  });
 
 export { app };
