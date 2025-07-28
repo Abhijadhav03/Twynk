@@ -2,10 +2,15 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-dotenv.config({ path: './.env' });
-import authRoutes from './routes/auth.routes.js';
-import connectToDatabase from './db/connectToDb.js';
 import cookieParser from 'cookie-parser';
+dotenv.config({ path: './.env' });
+
+
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import connectToDatabase from './db/connectToDb.js';
+
+
 const app = express();
 const PORT = process.env.PORT;
 
@@ -39,7 +44,11 @@ app.use((req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-app.use('/api/v1', authRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+// app.use('/api/v1/posts', postRoutes);
+// app.use('/api/v1/comments', commentRoutes);
+// app.use('/api/v1/likes', likeRoutesauthRoutes);
 
 // Start server after DB connection
 connectToDatabase()
