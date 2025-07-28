@@ -6,6 +6,61 @@ import ApiError from '../utils/apierror.js';
 import ApiResponse, { successResponse } from '../utils/apiresponse.js';
 import { generateTokenAndSetCookie } from '../utils/genrateToken.js';
 
+// export const signup = async (req, res) => {
+// 	try {
+// 		const { fullName, username, email, password } = req.body;
+
+// 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 		if (!emailRegex.test(email)) {
+// 			return res.status(400).json({ error: "Invalid email format" });
+// 		}
+
+// 		const existingUser = await User.findOne({ username });
+// 		if (existingUser) {
+// 			return res.status(400).json({ error: "Username is already taken" });
+// 		}
+
+// 		const existingEmail = await User.findOne({ email });
+// 		if (existingEmail) {
+// 			return res.status(400).json({ error: "Email is already taken" });
+// 		}
+
+// 		if (password.length < 6) {
+// 			return res.status(400).json({ error: "Password must be at least 6 characters long" });
+// 		}
+
+// 		const salt = await bcrypt.genSalt(10);
+// 		const hashedPassword = await bcrypt.hash(password, salt);
+
+// 		const newUser = new User({
+// 			fullName,
+// 			username,
+// 			email,
+// 			password: hashedPassword,
+// 		});
+
+// 		if (newUser) {
+// 			generateTokenAndSetCookie(newUser._id, res);
+// 			await newUser.save();
+
+// 			res.status(201).json({
+// 				_id: newUser._id,
+// 				fullName: newUser.fullName,
+// 				username: newUser.username,
+// 				email: newUser.email,
+// 				followers: newUser.followers,
+// 				following: newUser.following,
+// 				profileImg: newUser.profileImg,
+// 				coverImg: newUser.coverImg,
+// 			});
+// 		} else {
+// 			res.status(400).json({ error: "Invalid user data" });
+// 		}
+// 	} catch (error) {
+// 		console.log("Error in signup controller", error.message);
+// 		res.status(500).json({ error: "Internal Server Error" });
+// 	}
+// };
 
 export const signupUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
@@ -33,35 +88,33 @@ export const signupUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, salt);
 
   // Create the user
-  const newUser = new User({
-    username,
-    fullName,
-    email,
-    password: hashedPassword,
-  });
+const newUser = new User({
+  username,
+  fullName,
+  email,
+  password: hashedPassword,
+});
 
+await newUser.save(); // Save the user first
 
-  if(newUser){
-    generateTokenAndSetCookie(newUser._id, res);
-  }
-  await newUser.save();
+// Generate token after user is saved
+const token = generateTokenAndSetCookie(newUser._id, res);
+console.log(`Generated token: ${token}`);
 
-  
-
-  // Send response
-  return new ApiResponse("success", "User created successfully", {
-    token,
-    newUser: {
-      id: newUser._id,
-      username: newUser.username,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      profilePicture: newUser.profilePicture,
-      coverPicture: newUser.coverPicture,
-      bio: newUser.bio,
-      links: newUser.links,
-    },
-  }).send(res);
+// Send response
+return new ApiResponse("success", "User created successfully", {
+  token,
+  newUser: {
+    id: newUser._id,
+    username: newUser.username,
+    fullName: newUser.fullName,
+    email: newUser.email,
+    profilePicture: newUser.profilePicture,
+    coverPicture: newUser.coverPicture,
+    bio: newUser.bio,
+    links: newUser.links,
+  },
+}).send(res);
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
