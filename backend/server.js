@@ -6,10 +6,11 @@ import cookieParser from 'cookie-parser';
 dotenv.config({ path: './.env' });
 import { v2 as cloudinary } from 'cloudinary';
 
-import authRoutes from './routes/auth.routes.js';
-import userRoutes from './routes/user.routes.js';
+import authRoutes from './routes/auth.route.js';
+import userRoutes from './routes/user.route.js';
 import connectToDatabase from './db/connectToDb.js';
-import postRoutes from './routes/post.routes.js';
+import postRoutes from './routes/post.route.js';
+import notificationRoutes from './routes/notification.route.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -56,7 +57,7 @@ app.listen(PORT, () => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/posts', postRoutes);
-
+app.use('/api/v1/notifications', notificationRoutes);
 // Start server after DB connection
 connectToDatabase()
   .then(() => {
