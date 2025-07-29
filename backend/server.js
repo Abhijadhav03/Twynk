@@ -4,12 +4,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 dotenv.config({ path: './.env' });
-import { v2 as  cloudinary} from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import connectToDatabase from './db/connectToDb.js';
-
+import postRoutes from './routes/post.routes.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -37,12 +37,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Set security-related HTTP headers
+// security-related HTTP headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains'
+  );
   next();
 });
 
@@ -52,9 +55,7 @@ app.listen(PORT, () => {
 });
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
-// app.use('/api/v1/posts', postRoutes);
-// app.use('/api/v1/comments', commentRoutes);
-// app.use('/api/v1/likes', likeRoutesauthRoutes);
+app.use('/api/v1/posts', postRoutes);
 
 // Start server after DB connection
 connectToDatabase()

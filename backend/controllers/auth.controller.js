@@ -88,37 +88,36 @@ export const signupUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, salt);
 
   // Create the user
-const newUser = new User({
-  username,
-  fullName,
-  email,
-  password: hashedPassword,
-});
+  const newUser = new User({
+    username,
+    fullName,
+    email,
+    password: hashedPassword,
+  });
 
-await newUser.save(); // Save the user first
+  await newUser.save(); // Save the user first
 
-// Generate token after user is saved
-const token = generateTokenAndSetCookie(newUser._id, res);
-console.log(`Generated token: ${token}`);
+  // Generate token after user is saved
+  const token = generateTokenAndSetCookie(newUser._id, res);
+  console.log(`Generated token: ${token}`);
 
-// Send response
-return new ApiResponse("success", "User created successfully", {
-  token,
-  newUser: {
-    id: newUser._id,
-    username: newUser.username,
-    fullName: newUser.fullName,
-    email: newUser.email,
-    profilePicture: newUser.profilePicture,
-    coverPicture: newUser.coverPicture,
-    bio: newUser.bio,
-    links: newUser.links,
-  },
-}).send(res);
+  // Send response
+  return new ApiResponse('success', 'User created successfully', {
+    token,
+    newUser: {
+      id: newUser._id,
+      username: newUser.username,
+      fullName: newUser.fullName,
+      email: newUser.email,
+      profilePicture: newUser.profilePicture,
+      coverPicture: newUser.coverPicture,
+      bio: newUser.bio,
+      links: newUser.links,
+    },
+  }).send(res);
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
-
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -142,7 +141,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   //  const accessToken = user.generateAccessToken();
   //  const refreshToken = user.generateRefreshToken();
 
-  return successResponse(res, "User logged in successfully" , {
+  return successResponse(res, 'User logged in successfully', {
     token,
     user: {
       id: user._id,
@@ -157,14 +156,13 @@ export const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 export const getMe = asyncHandler(async (req, res) => {
-  const userId = req.user._id; 
+  const userId = req.user._id;
   const user = await User.findById(userId).select('-password');
   if (!user) {
     throw new ApiError('User not found', 404);
   }
-  return successResponse(res, "User fetched successfully", user);
+  return successResponse(res, 'User fetched successfully', user);
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
@@ -174,26 +172,29 @@ export const logoutUser = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
-  
-  return successResponse(res, "User logged out successfully", null);
+
+  return successResponse(res, 'User logged out successfully', null);
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const userId = await  req.user._id;
-  const { fullName, bio, email  } = req.body;
+  const userId = await req.user._id;
+  const { fullName, bio, email } = req.body;
 
-  const updatedUser = await User.findByIdAndUpdate(userId, {
-    fullName,
-    bio,
-    email
-    
-  }, { new: true });
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      fullName,
+      bio,
+      email,
+    },
+    { new: true }
+  );
 
   if (!updatedUser) {
     throw new ApiError('User not found', 404);
   }
 
-  return successResponse(res, "User updated successfully", {
+  return successResponse(res, 'User updated successfully', {
     user: {
       id: updatedUser._id,
       username: updatedUser.username,
