@@ -1,7 +1,11 @@
 import e from 'express';
 import express from 'express';
 import { protectRoute } from '../middelewares/protectroute.middleware.js';
-import { deleteNotifications, getallnotifications, getNotifications } from '../controllers/notification.controller.js';
+import {
+  deleteNotifications,
+  getallnotifications,
+  getNotifications,
+} from '../controllers/notification.controller.js';
 //import { getNotifications } from './../controllers/notification.controller.js';
 
 const router = express.Router();

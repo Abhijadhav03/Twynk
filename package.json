@@ -6,7 +6,7 @@
     "dev": "nodemon backend/server.js",
     "start": "node backend/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "format": "prettier --write \"backend/**/*.{js,jsx,ts,tsx}\"",
+    "format": "prettier --write \"frontend/**/*.{js,jsx,ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "keywords": [],

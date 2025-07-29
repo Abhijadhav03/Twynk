@@ -246,35 +246,35 @@ export const likedPost = asyncHandler(async (req, res) => {
 });
 
 export const getFollowingPosts = asyncHandler(async (req, res) => {
-    const userId = req.user._id.toString();
-    
-    try {
-        const user = await User.findById(userId).populate('following');
-        if (!user) {
-        return res.status(404).json({
-            success: false,
-            message: 'User not found',
-        });
-        }
-    
-        const followingPosts = await Post.find({
-        user: { $in: user.following.map(follow => follow._id) },
-        })
-        .populate('user')
-        .populate('comments.user', 'username fullName')
-        .sort({ createdAt: -1 });
-    
-        res.status(200).json({
-        success: true,
-        posts: followingPosts,
-        });
-    } catch (error) {
-        res.status(500).json({
+  const userId = req.user._id.toString();
+
+  try {
+    const user = await User.findById(userId).populate('following');
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: 'Failed to fetch following posts',
-        error: error.message,
-        });
+        message: 'User not found',
+      });
     }
+
+    const followingPosts = await Post.find({
+      user: { $in: user.following.map(follow => follow._id) },
+    })
+      .populate('user')
+      .populate('comments.user', 'username fullName')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      posts: followingPosts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch following posts',
+      error: error.message,
+    });
+  }
 });
 
 export const getUserPosts = asyncHandler(async (req, res) => {
