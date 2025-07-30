@@ -104,7 +104,6 @@ const SignUpPage = () => {
 };
 export default SignUpPage;
 
-
 // import React from 'react'
 // import XSvg from '../../../components/svgs/x'
 
@@ -130,7 +129,3 @@ export default SignUpPage;
 // }
 
 // export default Signuppage
-
-
-
-
