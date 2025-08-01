@@ -16,7 +16,7 @@ router.route('/').get((req, res) => {
 router.route('/signup').post(signupUser);
 router.route('/login').post(loginUser);
 router.route('/logout').post(logoutUser);
-router.route('/profile').get(protectRoute, getMe);
+router.route('/me').get(protectRoute, getMe);
 router.route('/updateUser').put(protectRoute, updateUser);
 
 export default router;

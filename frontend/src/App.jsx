@@ -1,4 +1,5 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
+
 import LoginPage from './pages/auth/login/loginPage';
 import HomePage from './pages/home/homePage';
 import SignUpPage from './pages/auth/signup/SignUpPage';
@@ -7,21 +8,65 @@ import ProfilePage from './pages/profile/ProfilePage';
 
 import Sidebar from './components/common/sideBar';
 import RightPanel from './components/common/rightPanel';
-function App() {
-  return (
-    <div className="flex max-w-6xl mx-auto">
-      <Sidebar />
+import toast, { Toaster } from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/notifications" element={<NotificationPage />} />
-        <Route path="/profile/:username" element={<ProfilePage />} />
-      </Routes>
-      <RightPanel />
+function App() {
+	const { data: authUser, isLoading, error } = useQuery({
+  queryKey: ["authUser"],
+  queryFn: async () => {
+    try {
+      const res = await fetch("/api/v1/auth/me", {
+         credentials: "include",
+      });
+      const data = await res.json();
+      if (data.error) return null;
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+       
+      }
+      console.log("authUser is here:", data);
+      // toast.success("Logged in successfully!");
+      return data;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+});
+
+if (isLoading) {
+  return (
+    <div className='h-screen flex justify-center items-center'>
+      <LoadingSpinner size='lg' />
     </div>
   );
+}
+
+if (error) {
+  return (
+    <div className='h-screen flex justify-center items-center'>
+      <p className='text-red-500'>Error: {error.message}</p>
+    </div>
+  );
+}
+	return (
+		<div className='flex max-w-6xl mx-auto'>
+		
+			{authUser && <Sidebar />}
+			<Routes>
+				<Route path='/' element={authUser ? <HomePage /> : <Navigate to='/login' />} />
+				<Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to='/' />} />
+				<Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to='/' />} />
+				<Route path='/notifications' element={authUser ? <NotificationPage /> : <Navigate to='/login' />} />
+				<Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to='/login' />} />
+        {/* <Route path='/logout' element={<Navigate to='/login' />} /> */}
+				
+			</Routes>
+			{authUser && <RightPanel />}
+			<Toaster />
+		</div>
+	);
 }
 
 export default App;
