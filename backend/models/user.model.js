@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
         ref: 'User',
         default: [],
       },
+      
     ],
     following: [
       {

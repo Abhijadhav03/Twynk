@@ -4,29 +4,16 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { IoSettingsOutline } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
 import { FaHeart } from 'react-icons/fa6';
-
+import { useQuery } from '@tanstack/react-query';
+import {useQueryClient} from '@tanstack/react-query';
 const NotificationPage = () => {
   const isLoading = false;
-  const notifications = [
-    {
-      _id: '1',
-      from: {
-        _id: '1',
-        username: 'johndoe',
-        profileImg: '/avatars/boy2.png',
-      },
-      type: 'follow',
-    },
-    {
-      _id: '2',
-      from: {
-        _id: '2',
-        username: 'janedoe',
-        profileImg: '/avatars/girl1.png',
-      },
-      type: 'like',
-    },
-  ];
+  const queryClient = useQueryClient();
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => queryClient.getQueryData(['notifications']),
+  });
 
   const deleteNotifications = () => {
     alert('All notifications deleted');

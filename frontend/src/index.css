@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, black, synthwave ,night , business, forest ;
+  themes: light --default, dark --prefersdark, black,wireframe, synthwave ,night , business,cupcake,corporate, forest ;
 } 
 /* @plugin "daisyui" {
   themes: light --default, dark --prefersdark, cupcake;

@@ -7,6 +7,7 @@ export const createPost = asyncHandler(async (req, res) => {
   const { text, img } = req.body;
   const userId = req.user._id.toString();
   const user = await User.findById(userId);
+  const fullName = await User.findById(userId).select('fullName');
 
   if (!user) {
     return res.status(404).json({
@@ -28,6 +29,7 @@ export const createPost = asyncHandler(async (req, res) => {
   try {
     const newPost = await Post.create({
       user: userId,
+      fullName,
       text,
       img,
     });

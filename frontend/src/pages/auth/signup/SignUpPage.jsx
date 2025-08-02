@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import XSvg from '../../../components/svgs/x';
-
+// import hero-background.jpg from '../../../assets/hero-background.jpg';
 import { MdOutlineMail } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 import { MdPassword } from 'react-icons/md';
 import { MdDriveFileRenameOutline } from 'react-icons/md';
 import { toast } from 'react-hot-toast';
+
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -15,7 +16,7 @@ const SignUpPage = () => {
     fullName: '',
     password: '',
   });
-
+const queryclient = useQueryClient();
   const { mutate, isError, isPending, error } = useMutation({
     mutationFn: async ({ email, username, fullName, password }) => {
       try {
@@ -35,6 +36,7 @@ const SignUpPage = () => {
 
         if (data.status === 'success') {
           toast.success('user created successfully');
+          queryclient.invalidateQueries({ queryKey: ['authUser'] });
           return data;
         }
 
@@ -60,6 +62,7 @@ const SignUpPage = () => {
 
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen px-10">
+      
       <div className="flex-1 hidden lg:flex items-center  justify-center">
         <XSvg className=" lg:w-2/3 fill-white" />
       </div>
