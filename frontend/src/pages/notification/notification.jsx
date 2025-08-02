@@ -4,18 +4,54 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { IoSettingsOutline } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
 import { FaHeart } from 'react-icons/fa6';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {useQueryClient} from '@tanstack/react-query';
 const NotificationPage = () => {
-  const isLoading = false;
+  // const isLoading = false;
   const queryClient = useQueryClient();
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => queryClient.getQueryData(['notifications']),
+    queryFn: async () => {
+      try {
+       const res =  await fetch('/api/v1/notifications/', {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Something went wrong');
+        }
+        console.log('notifications are here:', data);
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        return data;
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+
+  const {isLoading,mutate} =  useMutation({
+    mutationFn: async () => {
+      try {
+       const res =  await fetch('/api/v1/notifications/', {
+         method: 'DELETE',
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Something went wrong');
+        }
+        console.log('notifications are here:', data);
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        return data;
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    }
   });
 
   const deleteNotifications = () => {
+    mutate();
     alert('All notifications deleted');
   };
 
@@ -34,6 +70,9 @@ const NotificationPage = () => {
             >
               <li>
                 <a onClick={deleteNotifications}>Delete all notifications</a>
+                {isLoading && (
+                  <span className="loading loading-spinner loading-sm"></span>
+                )}
               </li>
             </ul>
           </div>

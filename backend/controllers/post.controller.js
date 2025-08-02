@@ -2,12 +2,12 @@ import asyncHandler from '../utils/asynchandler.js';
 // import { js } from '@eslint/js';
 import User from '../models/user.model.js';
 import Post from '../models/post.model.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const createPost = asyncHandler(async (req, res) => {
-  const { text, img } = req.body;
+  let { text, img } = req.body;
   const userId = req.user._id.toString();
-  const user = await User.findById(userId);
-  const fullName = await User.findById(userId).select('fullName');
+  const user = await User.findById(userId).select('fullName');
 
   if (!user) {
     return res.status(404).json({
@@ -15,21 +15,33 @@ export const createPost = asyncHandler(async (req, res) => {
       message: 'User not found',
     });
   }
+
   if (!text && !img) {
     return res.status(400).json({
       success: false,
       message: 'Post must contain either text or an image',
     });
   }
+
   if (img) {
-    const uploadedresponse = await cloudinary.uploader.upload(img);
-    img = uploadedresponse.secure_url;
+    try {
+      const uploadedResponse = await cloudinary.uploader.upload(img, {
+        folder: 'posts',
+      });
+      img = uploadedResponse.secure_url;
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Image upload failed',
+        error: error.message,
+      });
+    }
   }
 
   try {
     const newPost = await Post.create({
       user: userId,
-      fullName,
+      fullName: user.fullName,
       text,
       img,
     });
@@ -47,6 +59,7 @@ export const createPost = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 export const likeunlikePost = asyncHandler(async (req, res) => {
   const postId = req.params.id;

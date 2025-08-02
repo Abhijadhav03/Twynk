@@ -5,25 +5,80 @@ import { FaRegBookmark } from 'react-icons/fa6';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import LoadingSpinner from './LoadingSpinner';
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState('');
-  const postOwner = post.user;
-  const isLiked = false;
+const {data: authUser} = useQuery({
+  queryKey: ['authUser'],
+  // queryFn: () => {
 
-  const isMyPost = true;
+  // }
+});
+const queryClient = useQueryClient();
+
+const { mutate: deletePost, isPending } = useMutation({
+  mutationFn: async (postId) => {
+    const res = await fetch(`/api/v1/posts/delete/${postId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const data = await res.json();
+    console.log(data);
+    if (!res.ok) {
+      throw new Error(data.error || 'Something went wrong');
+    }
+    return data;
+  },
+  onSuccess: () => {
+    toast.success('Post deleted successfully');
+    queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
+  },
+});
+
+const {mutate: likePost, isLoading} = useMutation({
+  mutationFn: async () => {
+    const res = await fetch(`/api/v1/posts/like/${post._id}`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    const data = await res.json();
+    console.log(data);
+    if (!res.ok) {
+      throw new Error(data.error || 'Something went wrong');
+    }
+    return data;
+  },
+  onSuccess: () => {
+    toast.success('Post liked successfully');
+    queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
+  },
+})
+
+  const postOwner = post.user;
+  const isLiked = authUser?.data?.likedPosts?.includes(post._id);
+
+ const isMyPost = authUser?.data?._id === postOwner._id;
+
 
   const formattedDate = '1h';
 
   const isCommenting = false;
 
-  const handleDeletePost = () => {};
+  const handleDeletePost = () => {
+    deletePost(post._id);
+  };
 
   const handlePostComment = e => {
     e.preventDefault();
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+  likePost();
+  };
 
   return (
     <>
@@ -54,6 +109,9 @@ const Post = ({ post }) => {
                   className="cursor-pointer hover:text-red-500"
                   onClick={handleDeletePost}
                 />
+                {isPending && (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) }
               </span>
             )}
           </div>

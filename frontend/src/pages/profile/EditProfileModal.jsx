@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 const EditProfileModal = () => {
   const [formData, setFormData] = useState({
@@ -11,8 +13,41 @@ const EditProfileModal = () => {
     currentPassword: '',
   });
 
+  const queryClient = useQueryClient();
+
+  const { mutate, isLoading } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/v1/auth/updateUser', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Something went wrong');
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Profile updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['authUser'] });
+      document.getElementById('edit_profile_modal')?.close();
+    },
+    onError: error => {
+      toast.error(error.message || 'Failed to update profile');
+    },
+  });
+
   const handleInputChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleUpdateProfile = e => {
+    e.preventDefault();
+    mutate();
   };
 
   return (
@@ -25,16 +60,11 @@ const EditProfileModal = () => {
       >
         Edit profile
       </button>
+
       <dialog id="edit_profile_modal" className="modal">
         <div className="modal-box border rounded-md border-gray-700 shadow-md">
           <h3 className="font-bold text-lg my-3">Update Profile</h3>
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={e => {
-              e.preventDefault();
-              alert('Profile updated successfully');
-            }}
-          >
+          <form className="flex flex-col gap-4" onSubmit={handleUpdateProfile}>
             <div className="flex flex-wrap gap-2">
               <input
                 type="text"
@@ -96,8 +126,12 @@ const EditProfileModal = () => {
               name="link"
               onChange={handleInputChange}
             />
-            <button className="btn btn-primary rounded-full btn-sm text-white">
-              Update
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn btn-primary rounded-full btn-sm text-white"
+            >
+              {isLoading ? 'Updating...' : 'Update'}
             </button>
           </form>
         </div>
@@ -108,4 +142,6 @@ const EditProfileModal = () => {
     </>
   );
 };
+
 export default EditProfileModal;
+
