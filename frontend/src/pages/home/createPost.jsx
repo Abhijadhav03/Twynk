@@ -84,7 +84,7 @@ const CreatePost = () => {
     }
   };
 
-  if (isLoading) return <div className="p-4">Loading...</div>;
+  if (isLoading) return <div className="p-4">Loading....</div>;
 
   return (
     <div className="flex p-4 items-start gap-4 border-b border-gray-700">
