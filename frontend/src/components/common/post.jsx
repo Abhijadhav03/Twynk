@@ -12,57 +12,56 @@ import LoadingSpinner from './LoadingSpinner';
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState('');
-const {data: authUser} = useQuery({
-  queryKey: ['authUser'],
-  // queryFn: () => {
+  const { data: authUser } = useQuery({
+    queryKey: ['authUser'],
+    // queryFn: () => {
 
-  // }
-});
-const queryClient = useQueryClient();
+    // }
+  });
+  const queryClient = useQueryClient();
 
-const { mutate: deletePost, isPending } = useMutation({
-  mutationFn: async (postId) => {
-    const res = await fetch(`/api/v1/posts/delete/${postId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    const data = await res.json();
-    console.log(data);
-    if (!res.ok) {
-      throw new Error(data.error || 'Something went wrong');
-    }
-    return data;
-  },
-  onSuccess: () => {
-    toast.success('Post deleted successfully');
-    queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
-  },
-});
+  const { mutate: deletePost, isPending } = useMutation({
+    mutationFn: async postId => {
+      const res = await fetch(`/api/v1/posts/delete/${postId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      console.log(data);
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Post deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
+    },
+  });
 
-const {mutate: likePost, isLoading} = useMutation({
-  mutationFn: async () => {
-    const res = await fetch(`/api/v1/posts/like/${post._id}`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    const data = await res.json();
-    console.log(data);
-    if (!res.ok) {
-      throw new Error(data.error || 'Something went wrong');
-    }
-    return data;
-  },
-  onSuccess: () => {
-    toast.success('Post liked successfully');
-    queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
-  },
-})
+  const { mutate: likePost, isLoading } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/v1/posts/like/${post._id}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      console.log(data);
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Post liked successfully');
+      queryClient.invalidateQueries({ queryKey: ['posts'] }); // <-- refresh post list
+    },
+  });
 
   const postOwner = post.user;
   const isLiked = authUser?.data?.likedPosts?.includes(post._id);
 
- const isMyPost = authUser?.data?._id === postOwner._id;
-
+  const isMyPost = authUser?.data?._id === postOwner._id;
 
   const formattedDate = '1h';
 
@@ -77,7 +76,7 @@ const {mutate: likePost, isLoading} = useMutation({
   };
 
   const handleLikePost = () => {
-  likePost();
+    likePost();
   };
 
   return (
@@ -111,7 +110,7 @@ const {mutate: likePost, isLoading} = useMutation({
                 />
                 {isPending && (
                   <span className="loading loading-spinner loading-sm"></span>
-                ) }
+                )}
               </span>
             )}
           </div>

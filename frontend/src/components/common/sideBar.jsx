@@ -8,21 +8,18 @@ import { BiLogOut } from 'react-icons/bi';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 const Sidebar = () => {
-
   const queryClient = useQueryClient();
-  
 
-  const{mutate}=useMutation({
-    mutationFn: async ()=> {
+  const { mutate } = useMutation({
+    mutationFn: async () => {
       try {
         const res = await fetch('/api/v1/auth/logout', {
           method: 'POST',
-          
-        })
+        });
         const data = await res.json();
         console.log(data);
 
-        if(!res.ok){
+        if (!res.ok) {
           throw new Error(data.message || 'Something went wrong');
         }
       } catch (error) {
@@ -33,26 +30,19 @@ const Sidebar = () => {
       await queryClient.invalidateQueries({ queryKey: ['authUser'] });
       toast.success('logout successfully');
     },
-    onError: (error) => {
+    onError: error => {
       toast.error(error.message);
     },
-  })
- const {data:authUser}=useQuery({ queryKey: ['authUser'],
+  });
+
   
-  queryFn: async () => {
-    const res = await fetch('/api/v1/auth/me');
-    const data = await res.json();
+  const { data: authUser } = useQuery({
+    queryKey: ['authUser'],
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to fetch user');
-    }
+    
+  });
 
-    return data; // assuming your API returns { data: { username, fullName, ... } }
-  },
-});
-
- 
- console.log(authUser.data.username)
+  console.log(authUser.data.username);
 
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
@@ -105,13 +95,16 @@ const Sidebar = () => {
                 <p className="text-white font-bold text-sm w-20 truncate">
                   {authUser?.data.fullName}
                 </p>
-                <p className="text-slate-500 text-sm">@{authUser?.data.username}</p>
+                <p className="text-slate-500 text-sm">
+                  @{authUser?.data.username}
+                </p>
               </div>
-              <BiLogOut className="w-5 h-5 cursor-pointer" 
-              onClick = { (e) => {
-                e.preventDefault();
-                mutate();
-              }}
+              <BiLogOut
+                className="w-5 h-5 cursor-pointer"
+                onClick={e => {
+                  e.preventDefault();
+                  mutate();
+                }}
               />
             </div>
           </Link>

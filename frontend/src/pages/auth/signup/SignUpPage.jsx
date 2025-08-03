@@ -16,7 +16,7 @@ const SignUpPage = () => {
     fullName: '',
     password: '',
   });
-const queryclient = useQueryClient();
+  const queryclient = useQueryClient();
   const { mutate, isError, isPending, error } = useMutation({
     mutationFn: async ({ email, username, fullName, password }) => {
       try {
@@ -62,7 +62,6 @@ const queryclient = useQueryClient();
 
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen px-10">
-      
       <div className="flex-1 hidden lg:flex items-center  justify-center">
         <XSvg className=" lg:w-2/3 fill-white" />
       </div>

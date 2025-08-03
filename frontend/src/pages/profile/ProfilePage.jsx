@@ -23,16 +23,17 @@ const ProfilePage = () => {
 
   const isLoading = false;
   const isMyProfile = true;
-const fetchAuthUser = async () => {
-  const res = await fetch('/api/v1/auth/me');
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
-  return data;
-};
+  const fetchAuthUser = async () => {
+    const res = await fetch('/api/v1/auth/me');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    return data;
+  };
 
-  const { data: authUser } = useQuery({ queryKey: ['authUser'],
+  const { data: authUser } = useQuery({
+    queryKey: ['authUser'],
     queryFn: fetchAuthUser,
-   });
+  });
   const user = authUser?.data;
 
   console.log(user?.username);
@@ -51,7 +52,10 @@ const fetchAuthUser = async () => {
 
   return (
     <>
-      <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen" data-theme="forest">
+      <div
+        className="flex-[4_4_0] border-r border-gray-700 min-h-screen"
+        data-theme="forest"
+      >
         {/* HEADER */}
         {isLoading && <ProfileHeaderSkeleton />}
         {!isLoading && !user && (
@@ -87,14 +91,28 @@ const fetchAuthUser = async () => {
                     <MdEdit className="w-5 h-5 text-white" />
                   </div>
                 )}
-                <input type="file" hidden ref={coverImgRef} onChange={e => handleImgChange(e, 'coverImg')} />
-                <input type="file" hidden ref={profileImgRef} onChange={e => handleImgChange(e, 'profileImg')} />
+                <input
+                  type="file"
+                  hidden
+                  ref={coverImgRef}
+                  onChange={e => handleImgChange(e, 'coverImg')}
+                />
+                <input
+                  type="file"
+                  hidden
+                  ref={profileImgRef}
+                  onChange={e => handleImgChange(e, 'profileImg')}
+                />
 
                 {/* USER AVATAR */}
                 <div className="avatar absolute -bottom-16 left-4">
                   <div className="w-32 rounded-full relative group/avatar">
                     <img
-                      src={profileImg || user.profilePicture || '/avatar-placeholder.png'}
+                      src={
+                        profileImg ||
+                        user.profilePicture ||
+                        '/avatar-placeholder.png'
+                      }
                       alt="avatar"
                     />
                     <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
@@ -132,7 +150,9 @@ const fetchAuthUser = async () => {
               <div className="flex flex-col gap-4 mt-14 px-4">
                 <div className="flex flex-col">
                   <span className="font-bold text-lg">{user.fullName}</span>
-                  <span className="text-sm text-slate-500">@{user.username}</span>
+                  <span className="text-sm text-slate-500">
+                    @{user.username}
+                  </span>
                   <span className="text-sm my-1">{user.bio}</span>
                 </div>
 
@@ -152,17 +172,23 @@ const fetchAuthUser = async () => {
                   )}
                   <div className="flex gap-2 items-center">
                     <IoCalendarOutline className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm text-slate-500">Joined July 2021</span>
+                    <span className="text-sm text-slate-500">
+                      Joined July 2021
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">{user.following.length}</span>
+                    <span className="font-bold text-xs">
+                      {user.following.length}
+                    </span>
                     <span className="text-slate-500 text-xs">Following</span>
                   </div>
                   <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">{user.followers.length}</span>
+                    <span className="font-bold text-xs">
+                      {user.followers.length}
+                    </span>
                     <span className="text-slate-500 text-xs">Followers</span>
                   </div>
                 </div>

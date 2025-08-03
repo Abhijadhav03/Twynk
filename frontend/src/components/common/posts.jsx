@@ -16,7 +16,11 @@ const Posts = ({ feedType = 'forYou' }) => {
 
   const POST_ENDPOINT = getPostEndpoint();
 
-  const { data: posts, isLoading, refetch } = useQuery({
+  const {
+    data: posts,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['posts', feedType],
     queryFn: async () => {
       try {
@@ -35,9 +39,8 @@ const Posts = ({ feedType = 'forYou' }) => {
     },
   });
   useEffect(() => {
-		refetch();
-	}, [feedType, refetch]);
-
+    refetch();
+  }, [feedType, refetch]);
 
   return (
     <>
@@ -65,4 +68,3 @@ const Posts = ({ feedType = 'forYou' }) => {
 };
 
 export default Posts;
-

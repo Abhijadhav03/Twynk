@@ -5,14 +5,17 @@ import { IoCloseSharp } from 'react-icons/io5';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-
 const CreatePost = () => {
   const [text, setText] = useState('');
   const [img, setImg] = useState(null);
   const imgRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: authUser, isLoading, isError } = useQuery({
+  const {
+    data: authUser,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['authUser'],
     queryFn: async () => {
       const res = await fetch('/api/v1/auth/me', {
@@ -47,12 +50,12 @@ const CreatePost = () => {
       toast.success('Post created successfully');
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
-    onError: (error) => {
+    onError: error => {
       toast.error(`Error: ${error.message}`);
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     createPost(
       { text, img },
@@ -66,7 +69,7 @@ const CreatePost = () => {
     );
   };
 
-  const handleImgChange = (e) => {
+  const handleImgChange = e => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -95,7 +98,7 @@ const CreatePost = () => {
           className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none border-gray-800"
           placeholder="What is happening?!"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={e => setText(e.target.value)}
         />
         {img && (
           <div className="relative w-72 mx-auto">
@@ -106,7 +109,10 @@ const CreatePost = () => {
                 imgRef.current.value = null;
               }}
             />
-            <img src={img} className="w-full mx-auto h-72 object-contain rounded" />
+            <img
+              src={img}
+              className="w-full mx-auto h-72 object-contain rounded"
+            />
           </div>
         )}
         <div className="flex justify-between border-t py-2 border-t-gray-700">
@@ -117,7 +123,13 @@ const CreatePost = () => {
             />
             <BsEmojiSmileFill className="fill-primary w-5 h-5 cursor-pointer" />
           </div>
-          <input type="file" accept="image/*" hidden ref={imgRef} onChange={handleImgChange} />
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            ref={imgRef}
+            onChange={handleImgChange}
+          />
           <button className="btn btn-primary rounded-full btn-sm text-white px-4">
             {isPending ? 'Posting...' : 'Post'}
           </button>
