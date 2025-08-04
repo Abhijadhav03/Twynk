@@ -59,7 +59,7 @@ const ProfilePage = () => {
         {/* HEADER */}
         {isLoading && <ProfileHeaderSkeleton />}
         {!isLoading && !user && (
-          <p className="text-center text-lg mt-4">User not found</p>
+          <p className="text-center text-lg mt-4">Username not found</p>
         )}
         <div className="flex flex-col">
           {!isLoading && user && (
