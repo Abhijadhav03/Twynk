@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import RightPanelSkeleton from '../skeletons/RightPanelSkeleton';
 import { useQuery } from '@tanstack/react-query';
-import useFollow from './../../hooks/useFollow';
+import RightPanelSkeleton from '../skeletons/RightPanelSkeleton';
 import LoadingSpinner from './LoadingSpinner';
+import useFollow from './../../hooks/useFollow';
 
 const RightPanel = () => {
-   const {follow, isLoading: isFollowing} = useFollow();
+  const { follow, isFollowing } = useFollow();
+
   const {
     data: suggest,
     isLoading,
@@ -14,26 +15,24 @@ const RightPanel = () => {
   } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      try {
-        const res = await fetch('/api/v1/users/suggested', {
-          credentials: 'include',
-        });
-        const data = await res.json();
-        console.log(data); // For debugging
-        if (!res.ok) {
-          throw new Error(data.error || 'Something went wrong');
-        }
-        return data; // Expecting { success: true, message: '...', users: [...] }
-      } catch (error) {
-        throw new Error(error.message);
+      const res = await fetch('/api/v1/users/suggested', {
+        credentials: 'include',
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
       }
+      return data; // Expecting { users: [...] }
     },
   });
 
+  // Loading state
   if (isLoading) {
     return <RightPanelSkeleton />;
   }
 
+  // Error state
   if (isError) {
     return (
       <div className="hidden lg:block my-4 mx-2">
@@ -51,7 +50,7 @@ const RightPanel = () => {
         <p className="font-bold">Who to follow</p>
         <div className="flex flex-col gap-4">
           {suggest?.users?.length > 0 ? (
-            suggest.users.map(user => (
+            suggest.users.map((user) => (
               <Link
                 to={`/profile/${user.username}`}
                 className="flex items-center justify-between gap-4"
@@ -62,6 +61,7 @@ const RightPanel = () => {
                     <div className="w-8 rounded-full">
                       <img
                         src={user.profilePicture || '/avatar-placeholder.png'}
+                        alt={user.fullName || 'User avatar'}
                       />
                     </div>
                   </div>
@@ -77,11 +77,12 @@ const RightPanel = () => {
                 <button
                   className="btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm"
                   onClick={(e) => {
-                    e.preventDefault()
+                    e.preventDefault();
                     follow(user._id);
                   }}
+                  disabled={isFollowing} // Disable while loading
                 >
-                {isLoading ? LoadingSpinner : 'Follow'}
+                  {isFollowing ? <LoadingSpinner /> : 'Follow'}
                 </button>
               </Link>
             ))
