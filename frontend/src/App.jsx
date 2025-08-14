@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from './components/common/LoadingSpinner';
 // import EmojiPicker from 'emoji-picker-react';
 
+
 function App() {
   const {
     data: authUser,
