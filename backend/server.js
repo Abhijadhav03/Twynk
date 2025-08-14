@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 dotenv.config({ path: './.env' });
 import { v2 as cloudinary } from 'cloudinary';
-
+import path from 'path';
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/user.route.js';
 import connectToDatabase from './db/connectToDb.js';
@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notification.route.js';
 
 const app = express();
 const PORT = process.env.PORT;
+const __dirname = path.resolve();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -58,6 +59,18 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running...');
+  });
+}
+
 // Start server after DB connection
 connectToDatabase()
   .then(() => {
