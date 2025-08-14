@@ -41,38 +41,6 @@ It provides features like authentication, posting, following, notifications, and
 
 ---
 
-## 📦 Installation & Setup
-
-### Clone the repository
-
-git clone https://github.com/yourusername/twynk.git
-cd twynk
- Install dependencies
-Backend
-
-cd backend
-npm install
-Frontend
-
-bash
-
-cd ../frontend
-npm install
- Setup environment variables
-Create a .env file in both backend and frontend folders.
-
-### Backend .env
-
-env
-Copy
-Edit
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-Backend
 
 
 cd backend
