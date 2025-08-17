@@ -38,13 +38,7 @@
 - **Vite** (optional, if used): Fast frontend build tool.
 - **Nodemon**: Auto-restart for backend development.
 
----
 
-## 📸 Screenshots
-
-*(Add screenshots or GIFs here to showcase the app’s UI, e.g., homepage, profile page, or post feed. You can host them on Cloudinary or GitHub.)*
-
----
 
 ## 🛠️ Installation and Setup
 
@@ -61,5 +55,5 @@ Follow these steps to set up TWYNK locally on your machine.
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/your-username/twynk.git
+   git clone https://github.com/abhijadhav03/twynk.git
    cd twynk
