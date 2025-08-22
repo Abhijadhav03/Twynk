@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import Posts from '../../components/common/Posts';
+import Posts from '../../components/common/posts';
 import CreatePost from './CreatePost';
 
 const HomePage = () => {
