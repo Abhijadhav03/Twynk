@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import RightPanelSkeleton from '../skeletons/RightPanelSkeleton';
-import LoadingSpinner from './LoadingSpinner';
-import useFollow from './../../hooks/useFollow';
+import RightPanelSkeleton from '../skeletons/rightPanelSkeleton';
+import LoadingSpinner from './loadingSpinner';
+import useFollow from '../../hooks/useFollow';
 
 const RightPanel = () => {
   const { follow, isFollowing } = useFollow();
