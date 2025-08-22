@@ -73,29 +73,31 @@ export const likeunlikePost = asyncHandler(async (req, res) => {
         message: 'Post not found',
       });
     }
+
+    let message;
     if (post.likes.includes(userId)) {
-      // User already liked the post, so we remove the like
+      // Unlike
       post.likes = post.likes.filter(like => like.toString() !== userId);
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-      res.status(200).json({
-        success: true,
-        message: 'Post unliked successfully',
-        post,
-      });
+      message = 'Post unliked successfully';
     } else {
-      // User has not liked the post, so we add the like
+      // Like
       post.likes.push(userId);
       await User.updateOne(
         { _id: userId },
         { $addToSet: { likedPosts: postId } }
       );
-      res.status(200).json({
-        success: true,
-        message: 'Post liked successfully',
-        post,
-      });
+      message = 'Post liked successfully';
     }
+
+    // ✅ Save before responding
     await post.save();
+
+    res.status(200).json({
+      success: true,
+      message,
+      post,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
