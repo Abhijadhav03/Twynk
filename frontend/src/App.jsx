@@ -8,7 +8,7 @@ import ProfilePage from './pages/profile/ProfilePage';
 
 import Sidebar from './components/common/sideBar';
 import RightPanel from './components/common/rightPanel';
-import toast, { Toaster } from 'react-hot-toast';
+import  { Toaster } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from './components/common/LoadingSpinner';
 // import EmojiPicker from 'emoji-picker-react';
