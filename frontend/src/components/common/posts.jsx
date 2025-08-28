@@ -1,4 +1,4 @@
-import Post from './Post';
+import Post from './post';
 import PostSkeleton from '../skeletons/PostsSkeleton';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
