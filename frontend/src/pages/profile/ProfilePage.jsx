@@ -27,6 +27,7 @@ const ProfilePage = () => {
       : `/api/v1/auth/me`;
 
     const res = await fetch(endpoint, { credentials: 'include' });
+    console.log(res);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to fetch user');
     return data;
