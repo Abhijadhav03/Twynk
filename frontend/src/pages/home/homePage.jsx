@@ -42,6 +42,5 @@ const HomePage = () => {
     </>
   );
 };
-export default HomePage;
 
-import React from 'react';
+export default HomePage;

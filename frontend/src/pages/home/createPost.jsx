@@ -17,16 +17,6 @@ const CreatePost = () => {
     isError,
   } = useQuery({
     queryKey: ['authUser'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/auth/me', {
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch user');
-      }
-      return data;
-    },
   });
 
   const { mutate: createPost, isPending } = useMutation({
@@ -40,7 +30,6 @@ const CreatePost = () => {
         body: JSON.stringify({ text, img }),
       });
       const data = await res.json();
-      console.log(data); // For debugging
       if (!res.ok) {
         throw new Error(data.error || 'Something went wrong');
       }
@@ -50,12 +39,12 @@ const CreatePost = () => {
       toast.success('Post created successfully');
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
-    onError: error => {
+    onError: (error) => {
       toast.error(`Error: ${error.message}`);
     },
   });
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     createPost(
       { text, img },
@@ -69,7 +58,7 @@ const CreatePost = () => {
     );
   };
 
-  const handleImgChange = e => {
+  const handleImgChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -90,7 +79,10 @@ const CreatePost = () => {
     <div className="flex p-4 items-start gap-4 border-b border-gray-700">
       <div className="avatar">
         <div className="w-8 rounded-full">
-          <img src={authUser?.data?.profileImg || '/avatar-placeholder.png'} />
+          <img
+            src={authUser?.data?.profilePicture || '/avatar-placeholder.png'}
+            alt="avatar"
+          />
         </div>
       </div>
       <form className="flex flex-col gap-2 w-full" onSubmit={handleSubmit}>
@@ -98,7 +90,7 @@ const CreatePost = () => {
           className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none border-gray-800"
           placeholder="What is happening?!"
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
         />
         {img && (
           <div className="relative w-72 mx-auto">

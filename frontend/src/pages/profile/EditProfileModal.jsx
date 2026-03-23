@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-const EditProfileModal = () => {
+const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -13,11 +13,26 @@ const EditProfileModal = () => {
     currentPassword: '',
   });
 
+  // Pre-fill with current user data when modal opens or authUser changes
+  useEffect(() => {
+    if (authUser) {
+      setFormData({
+        fullName: authUser.fullName || '',
+        username: authUser.username || '',
+        email: authUser.email || '',
+        bio: authUser.bio || '',
+        link: authUser.link || '',
+        newPassword: '',
+        currentPassword: '',
+      });
+    }
+  }, [authUser]);
+
   const queryClient = useQueryClient();
 
-  const { mutate, isLoading } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/v1/auth/updateUser', {
+      const res = await fetch('/api/v1/users/update', {
         method: 'PUT',
         credentials: 'include',
         headers: {
@@ -34,18 +49,19 @@ const EditProfileModal = () => {
     onSuccess: () => {
       toast.success('Profile updated successfully');
       queryClient.invalidateQueries({ queryKey: ['authUser'] });
+      queryClient.invalidateQueries({ queryKey: ['profileUser'] });
       document.getElementById('edit_profile_modal')?.close();
     },
-    onError: error => {
+    onError: (error) => {
       toast.error(error.message || 'Failed to update profile');
     },
   });
 
-  const handleInputChange = e => {
+  const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleUpdateProfile = e => {
+  const handleUpdateProfile = (e) => {
     e.preventDefault();
     mutate();
   };
@@ -128,10 +144,10 @@ const EditProfileModal = () => {
             />
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
               className="btn btn-primary rounded-full btn-sm text-white"
             >
-              {isLoading ? 'Updating...' : 'Update'}
+              {isPending ? 'Updating...' : 'Update'}
             </button>
           </form>
         </div>

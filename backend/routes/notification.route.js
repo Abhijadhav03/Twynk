@@ -1,19 +1,19 @@
-import e from 'express';
 import express from 'express';
 import { protectRoute } from '../middelewares/protectroute.middleware.js';
 import {
-  deleteNotifications,
-  getallnotifications,
   getNotifications,
+  getUnreadCount,
+  markAsRead,
+  deleteAllNotifications,
+  deleteNotification,
 } from '../controllers/notification.controller.js';
-//import { getNotifications } from './../controllers/notification.controller.js';
 
 const router = express.Router();
 
 router.route('/').get(protectRoute, getNotifications);
-//router.route('/all').get(protectRoute, getallnotifications);
-// router.route('/:id').get(protectRoute, getNotificationById);
-// router.route('/mark-read/:id').patch(protectRoute, markNotificationAsRead);
-router.route('/').delete(protectRoute, deleteNotifications);
+router.route('/unread-count').get(protectRoute, getUnreadCount);
+router.route('/mark-read').put(protectRoute, markAsRead);
+router.route('/').delete(protectRoute, deleteAllNotifications);
+router.route('/:id').delete(protectRoute, deleteNotification);
 
 export default router;

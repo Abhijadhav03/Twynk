@@ -1,8 +1,8 @@
-import asyncHandler from '../utils/asynchandler.js';
 import User from '../models/user.model.js';
 import Notification from '../models/notification.model.js';
 import bcrypt from 'bcryptjs';
 import { v2 as cloudinary } from 'cloudinary';
+
 export const getUserProfile = async (req, res) => {
   try {
     const { username } = req.params;
@@ -48,50 +48,36 @@ export const followunfollowUser = async (req, res) => {
     const isFollowing = userToFollow.followers.includes(userId);
 
     if (isFollowing) {
-      // Unfollow
-      const updatedUser = await User.findByIdAndUpdate(
-        userToFollow._id,
-        { $pull: { followers: userId } },
-        { new: true }
-      );
+      // Unfollow - remove from both sides
+      await User.findByIdAndUpdate(userToFollow._id, {
+        $pull: { followers: userId },
+      });
+      await User.findByIdAndUpdate(userId, {
+        $pull: { following: userToFollow._id },
+      });
 
       return res.status(200).json({
         message: 'User unfollowed successfully',
-        user: {
-          id: updatedUser._id,
-          username: updatedUser.username,
-          followersCount: updatedUser.followers.length,
-        },
       });
     } else {
-      // Follow
-      const updatedUser = await User.findByIdAndUpdate(
-        userToFollow._id,
-        { $addToSet: { followers: userId } },
-        { new: true }
-      );
+      // Follow - add to both sides
+      await User.findByIdAndUpdate(userToFollow._id, {
+        $addToSet: { followers: userId },
+      });
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { following: userToFollow._id },
+      });
 
-      const notification = {
+      // Create follow notification
+      await Notification.create({
         from: userId,
         to: userToFollow._id,
         type: 'follow',
         content: `${req.user.username} started following you.`,
-      };
-      await Notification.create(notification);
-
-      await User.findByIdAndUpdate(
-        userId,
-        { $addToSet: { following: userToFollow._id } },
-        { new: true }
-      );
+      });
 
       return res.status(200).json({
         message: 'User followed successfully',
-        user: {
-          id: updatedUser._id,
-          username: updatedUser.username,
-          followersCount: updatedUser.followers.length,
-        },
       });
     }
   } catch (error) {
@@ -99,6 +85,7 @@ export const followunfollowUser = async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 export const getUserFollowers = async (req, res) => {
   const { username } = req.params;
 
@@ -112,7 +99,9 @@ export const getUserFollowers = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const followers = await User.find({ _id: { $in: user.followers } }).select('-password -__v');
+    const followers = await User.find({ _id: { $in: user.followers } }).select(
+      '-password -__v'
+    );
 
     return res.status(200).json({
       message: 'User followers fetched successfully',
@@ -144,8 +133,8 @@ export const getSuggestedUsers = async (req, res) => {
     ]);
 
     const suggestedUsers = users
-      .filter(user => user._id.toString() !== userId.toString())
-      .map(user => {
+      .filter((user) => user._id.toString() !== userId.toString())
+      .map((user) => {
         user.password = undefined;
         return user;
       });
@@ -193,37 +182,51 @@ export const updateUser = async (req, res) => {
       }
 
       if (newPassword.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        return res
+          .status(400)
+          .json({ error: 'Password must be at least 6 characters long' });
       }
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
 
-    // Profile Image Upload
+    // Profile Image Upload - use correct field name: profilePicture
     if (profileImg) {
-      if (user.profileImg) {
-        await cloudinary.uploader.destroy(user.profileImg.split('/').pop().split('.')[0]);
+      if (
+        user.profilePicture &&
+        user.profilePicture.includes('cloudinary')
+      ) {
+        const publicId = user.profilePicture.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
       }
-      const uploaded = await cloudinary.uploader.upload(profileImg);
-      user.profileImg = uploaded.secure_url;
+      const uploaded = await cloudinary.uploader.upload(profileImg, {
+        folder: 'twynk/profiles',
+      });
+      user.profilePicture = uploaded.secure_url;
     }
 
-    // Cover Image Upload
+    // Cover Image Upload - use correct field name: coverPicture
     if (coverImg) {
-      if (user.coverImg) {
-        await cloudinary.uploader.destroy(user.coverImg.split('/').pop().split('.')[0]);
+      if (
+        user.coverPicture &&
+        user.coverPicture.includes('cloudinary')
+      ) {
+        const publicId = user.coverPicture.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
       }
-      const uploaded = await cloudinary.uploader.upload(coverImg);
-      user.coverImg = uploaded.secure_url;
+      const uploaded = await cloudinary.uploader.upload(coverImg, {
+        folder: 'twynk/covers',
+      });
+      user.coverPicture = uploaded.secure_url;
     }
 
     // Update fields
     user.fullName = fullName || user.fullName;
     user.email = email || user.email;
     user.username = username || user.username;
-    user.bio = bio || user.bio;
-    user.link = link || user.link;
+    user.bio = bio !== undefined ? bio : user.bio;
+    user.link = link !== undefined ? link : user.link;
 
     await user.save();
     user.password = undefined;
@@ -235,32 +238,25 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// export const unfollowUser = asyncHandler(async (req, res) => {
-//   const { username } = req.params;
-//   const userId = req.user._id;
+export const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
 
-//   if (!username) {
-//     return res.status(400).json({ message: "Username is required" });
-//   }
+    const users = await User.find({
+      $or: [
+        { username: { $regex: q, $options: 'i' } },
+        { fullName: { $regex: q, $options: 'i' } },
+      ],
+    })
+      .select('-password -__v')
+      .limit(20);
 
-//   const userToUnfollow = await User.findOne({ username });
-//   if (!userToUnfollow) {
-//     return res.status(404).json({ message: "User not found" });
-//   }
-
-//   if (!userToUnfollow.followers.includes(userId)) {
-//     return res.status(400).json({ message: "You are not following this user" });
-//   }
-
-//   userToUnfollow.followers.pull(userId);
-//   await userToUnfollow.save();
-
-//   return res.status(200).json({
-//     message: "User unfollowed successfully",
-//     user: {
-//       id: userToUnfollow._id,
-//       username: userToUnfollow.username,
-//       followersCount: userToUnfollow.followers.length,
-//     },
-//   });
-// });
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error in searchUsers:', error.message);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};

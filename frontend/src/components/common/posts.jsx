@@ -1,14 +1,19 @@
-import Post from './post';
+import Post from './Post';
 import PostSkeleton from '../skeletons/PostsSkeleton';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-const Posts = ({ feedType = 'forYou' }) => {
+
+const Posts = ({ feedType = 'forYou', username, userId }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case 'forYou':
         return '/api/v1/posts/getall';
       case 'following':
         return '/api/v1/posts/following';
+      case 'posts':
+        return `/api/v1/posts/user/${username}`;
+      case 'likes':
+        return `/api/v1/posts/liked/${userId}`;
       default:
         return '/api/v1/posts/getall';
     }
@@ -21,26 +26,26 @@ const Posts = ({ feedType = 'forYou' }) => {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['posts', feedType],
+    queryKey: ['posts', feedType, username],
     queryFn: async () => {
       try {
         const res = await fetch(POST_ENDPOINT, {
-          credentials: 'include', // Add credentials
+          credentials: 'include',
         });
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error || 'Something went wrong');
         }
-        console.log('posts are here:', data);
-        return data.posts; // Return only the posts array
+        return data.posts;
       } catch (error) {
         throw new Error(error.message);
       }
     },
   });
+
   useEffect(() => {
     refetch();
-  }, [feedType, refetch]);
+  }, [feedType, username, refetch]);
 
   return (
     <>
@@ -58,7 +63,7 @@ const Posts = ({ feedType = 'forYou' }) => {
 
       {!isLoading && posts && (
         <div>
-          {posts.map(post => (
+          {posts.map((post) => (
             <Post key={post._id} post={post} />
           ))}
         </div>

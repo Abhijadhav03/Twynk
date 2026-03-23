@@ -19,8 +19,9 @@ router.route('/comment/:id').post(protectRoute, commentOnPost);
 router.route('/delete/:id').delete(protectRoute, deletePost);
 router.route('/getall').get(protectRoute, getallPosts);
 router.route('/update/:id').put(protectRoute, updatePost);
+router.route('/liked/:id').get(protectRoute, likedPost);
 router.route('/liked').get(protectRoute, likedPost);
 router.route('/following').get(protectRoute, getFollowingPosts);
-router.route('/user/:id').get(protectRoute, getUserPosts);
+router.route('/user/:username').get(protectRoute, getUserPosts);
 
 export default router;

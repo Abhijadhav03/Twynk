@@ -1,7 +1,7 @@
 import asyncHandler from '../utils/asynchandler.js';
-// import { js } from '@eslint/js';
 import User from '../models/user.model.js';
 import Post from '../models/post.model.js';
+import Notification from '../models/notification.model.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 export const createPost = asyncHandler(async (req, res) => {
@@ -26,7 +26,7 @@ export const createPost = asyncHandler(async (req, res) => {
   if (img) {
     try {
       const uploadedResponse = await cloudinary.uploader.upload(img, {
-        folder: 'posts',
+        folder: 'twynk/posts',
       });
       img = uploadedResponse.secure_url;
     } catch (error) {
@@ -60,7 +60,6 @@ export const createPost = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const likeunlikePost = asyncHandler(async (req, res) => {
   const postId = req.params.id;
   const userId = req.user._id.toString();
@@ -77,7 +76,7 @@ export const likeunlikePost = asyncHandler(async (req, res) => {
     let message;
     if (post.likes.includes(userId)) {
       // Unlike
-      post.likes = post.likes.filter(like => like.toString() !== userId);
+      post.likes = post.likes.filter((like) => like.toString() !== userId);
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
       message = 'Post unliked successfully';
     } else {
@@ -88,15 +87,24 @@ export const likeunlikePost = asyncHandler(async (req, res) => {
         { $addToSet: { likedPosts: postId } }
       );
       message = 'Post liked successfully';
+
+      // Create like notification (only if not liking own post)
+      if (post.user.toString() !== userId) {
+        await Notification.create({
+          from: userId,
+          to: post.user,
+          type: 'like',
+          content: `${req.user.username} liked your post.`,
+        });
+      }
     }
 
-    // ✅ Save before responding
     await post.save();
 
     res.status(200).json({
       success: true,
       message,
-      post,
+      likes: post.likes,
     });
   } catch (error) {
     res.status(500).json({
@@ -126,11 +134,9 @@ export const deletePost = asyncHandler(async (req, res) => {
       });
     }
     if (post.img) {
-      // If the post has an image, delete it from Cloudinary
-      const publicId = post.img.split('/').pop().split('.')[0]; // Extracting public ID from URL
+      const publicId = post.img.split('/').pop().split('.')[0];
       await cloudinary.uploader.destroy(publicId);
     }
-    // Delete the post from the database
     await Post.findByIdAndDelete(postId);
     res.status(200).json({
       success: true,
@@ -168,10 +174,25 @@ export const commentOnPost = asyncHandler(async (req, res) => {
     post.comments.push({ text, user: userId });
     await post.save();
 
+    // Create comment notification (only if not commenting on own post)
+    if (post.user.toString() !== userId) {
+      await Notification.create({
+        from: userId,
+        to: post.user,
+        type: 'comment',
+        content: `${req.user.username} commented on your post: "${text.substring(0, 50)}"`,
+      });
+    }
+
+    // Re-fetch with populated comments
+    const updatedPost = await Post.findById(postId)
+      .populate('user', '-password')
+      .populate('comments.user', 'username fullName profilePicture');
+
     res.status(201).json({
       success: true,
       message: 'Comment added successfully',
-      post,
+      post: updatedPost,
     });
   } catch (error) {
     res.status(500).json({
@@ -184,10 +205,9 @@ export const commentOnPost = asyncHandler(async (req, res) => {
 
 export const getallPosts = asyncHandler(async (req, res) => {
   try {
-    const fullName = await User.findById(req.user._id).select('fullName');
     const posts = await Post.find()
-      .populate('user')
-      .populate('comments.user', 'username fullName')
+      .populate('user', '-password')
+      .populate('comments.user', 'username fullName profilePicture')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -239,10 +259,16 @@ export const updatePost = asyncHandler(async (req, res) => {
 });
 
 export const likedPost = asyncHandler(async (req, res) => {
-  const userId = req.user._id.toString();
+  const userId = req.params.id || req.user._id.toString();
 
   try {
-    const user = await User.findById(userId).populate('likedPosts');
+    const user = await User.findById(userId).populate({
+      path: 'likedPosts',
+      populate: [
+        { path: 'user', select: '-password' },
+        { path: 'comments.user', select: 'username fullName profilePicture' },
+      ],
+    });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -251,7 +277,7 @@ export const likedPost = asyncHandler(async (req, res) => {
     }
     res.status(200).json({
       success: true,
-      likedPosts: user.likedPosts,
+      posts: user.likedPosts || [],
     });
   } catch (error) {
     res.status(500).json({
@@ -275,10 +301,10 @@ export const getFollowingPosts = asyncHandler(async (req, res) => {
     }
 
     const followingPosts = await Post.find({
-      user: { $in: user.following.map(follow => follow._id) },
+      user: { $in: user.following.map((follow) => follow._id) },
     })
-      .populate('user')
-      .populate('comments.user', 'username fullName')
+      .populate('user', '-password')
+      .populate('comments.user', 'username fullName profilePicture')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -295,19 +321,19 @@ export const getFollowingPosts = asyncHandler(async (req, res) => {
 });
 
 export const getUserPosts = asyncHandler(async (req, res) => {
-  const userId = req.params.id;
+  const { username } = req.params;
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found',
       });
     }
-    const posts = await Post.find({ user: userId })
-      .populate('user')
-      .populate('comments.user', 'username fullName')
+    const posts = await Post.find({ user: user._id })
+      .populate('user', '-password')
+      .populate('comments.user', 'username fullName profilePicture')
       .sort({ createdAt: -1 });
     res.status(200).json({
       success: true,

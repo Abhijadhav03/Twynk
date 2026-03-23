@@ -5,14 +5,13 @@ import HomePage from './pages/home/homePage';
 import SignUpPage from './pages/auth/signup/SignUpPage';
 import NotificationPage from './pages/notification/notification';
 import ProfilePage from './pages/profile/ProfilePage';
+import SearchPage from './pages/search/SearchPage';
 
 import Sidebar from './components/common/sideBar';
 import RightPanel from './components/common/RightPanel';
-import  { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from './components/common/LoadingSpinner';
-// import EmojiPicker from 'emoji-picker-react';
-
 
 function App() {
   const {
@@ -31,13 +30,12 @@ function App() {
         if (!res.ok) {
           throw new Error(data.error || 'Something went wrong');
         }
-        console.log('authUser is here:', data);
-        // toast.success("Logged in successfully!");
         return data;
       } catch (error) {
         throw new Error(error.message);
       }
     },
+    retry: false,
   });
 
   if (isLoading) {
@@ -55,6 +53,7 @@ function App() {
       </div>
     );
   }
+
   return (
     <div className="flex max-w-6xl mx-auto">
       {authUser && <Sidebar />}
@@ -79,10 +78,12 @@ function App() {
           path="/profile/:username"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
         />
-        {/* <Route path='/logout' element={<Navigate to='/login' />} /> */}
+        <Route
+          path="/search"
+          element={authUser ? <SearchPage /> : <Navigate to="/login" />}
+        />
       </Routes>
       {authUser && <RightPanel />}
-       {/* <EmojiPicker /> */}
       <Toaster />
     </div>
   );

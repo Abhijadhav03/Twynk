@@ -1,18 +1,21 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import Posts from '../../components/common/posts';
 import ProfileHeaderSkeleton from '../../components/skeletons/ProfileHeaderSkeleton';
 import EditProfileModal from './EditProfileModal';
 
-import { POSTS } from '../../utils/db/dummy';
 import { FaArrowLeft, FaLink } from 'react-icons/fa';
 import { IoCalendarOutline } from 'react-icons/io5';
 import { MdEdit } from 'react-icons/md';
+import { formatJoinDate } from '../../utils/formatDate';
+import useFollow from '../../hooks/useFollow';
+import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
   const { username } = useParams();
+  const queryClient = useQueryClient();
 
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
@@ -21,13 +24,13 @@ const ProfilePage = () => {
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
-  const fetchUser = async () => {
-    const endpoint = username
-      ? `/api/v1/users/profile/${username}`
-      : `/api/v1/auth/me`;
+  const { follow, isFollowing } = useFollow();
 
-    const res = await fetch(endpoint, { credentials: 'include' });
-    console.log(res);
+  // Fetch the profile user
+  const fetchUser = async () => {
+    const res = await fetch(`/api/v1/users/profile/${username}`, {
+      credentials: 'include',
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to fetch user');
     return data;
@@ -38,17 +41,60 @@ const ProfilePage = () => {
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
-    queryKey: ['profileUser', username || 'me'],
+    queryKey: ['profileUser', username],
     queryFn: fetchUser,
+    enabled: !!username,
   });
 
-  const user = data?.user; // Changed from data?.data to data?.user
-  const isMyProfile = !username || username === user?.username;
+  // Get auth user from cache
+  const { data: authUser } = useQuery({ queryKey: ['authUser'] });
+
+  const user = data?.user;
+  const isMyProfile = authUser?.data?._id === user?._id;
+  const amIFollowing = authUser?.data?.following?.includes(user?._id);
+
+  // Reset images when navigating to different profile
+  useEffect(() => {
+    setCoverImg(null);
+    setProfileImg(null);
+    setFeedType('posts');
+    refetch();
+  }, [username, refetch]);
+
+  // Mutation to update profile/cover images
+  const { mutate: updateImages, isPending: isUpdatingImages } = useMutation({
+    mutationFn: async ({ profileImg, coverImg }) => {
+      const res = await fetch('/api/v1/users/update', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileImg, coverImg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update images');
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Profile updated successfully!');
+      setCoverImg(null);
+      setProfileImg(null);
+      queryClient.invalidateQueries({ queryKey: ['profileUser'] });
+      queryClient.invalidateQueries({ queryKey: ['authUser'] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (state === 'coverImg') setCoverImg(reader.result);
@@ -58,13 +104,30 @@ const ProfilePage = () => {
     }
   };
 
+  const handleUpdateImages = () => {
+    updateImages({ profileImg, coverImg });
+  };
+
+  const handleFollowUnfollow = () => {
+    if (user?._id) {
+      follow(user._id);
+    }
+  };
+
   if (isLoading) return <ProfileHeaderSkeleton />;
   if (isError)
-    return <p className="text-center text-lg mt-4 text-red-500">Error: {error.message}</p>;
+    return (
+      <p className="text-center text-lg mt-4 text-red-500">
+        Error: {error.message}
+      </p>
+    );
   if (!user) return <p className="text-center text-lg mt-4">User not found</p>;
 
   return (
-    <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen" data-theme="forest">
+    <div
+      className="flex-[4_4_0] border-r border-gray-700 min-h-screen"
+      data-theme="forest"
+    >
       <div className="flex flex-col">
         <div className="flex gap-10 px-4 py-2 items-center">
           <Link to="/">
@@ -72,7 +135,6 @@ const ProfilePage = () => {
           </Link>
           <div className="flex flex-col">
             <p className="font-bold text-lg">{user.fullName}</p>
-            <span className="text-sm text-slate-500">{POSTS?.length} posts</span>
           </div>
         </div>
 
@@ -92,12 +154,14 @@ const ProfilePage = () => {
           )}
           <input
             type="file"
+            accept="image/*"
             hidden
             ref={coverImgRef}
             onChange={(e) => handleImgChange(e, 'coverImg')}
           />
           <input
             type="file"
+            accept="image/*"
             hidden
             ref={profileImgRef}
             onChange={(e) => handleImgChange(e, 'profileImg')}
@@ -106,8 +170,11 @@ const ProfilePage = () => {
           <div className="avatar absolute -bottom-16 left-4">
             <div className="w-32 rounded-full relative group/avatar">
               <img
-                src={profileImg || user.profilePicture || '/avatar-placeholder.png'}
+                src={
+                  profileImg || user.profilePicture || '/avatar-placeholder.png'
+                }
                 alt="avatar"
+                className="rounded-full"
               />
               {isMyProfile && (
                 <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
@@ -122,21 +189,27 @@ const ProfilePage = () => {
         </div>
 
         <div className="flex justify-end px-4 mt-5">
-          {isMyProfile && <EditProfileModal />}
+          {isMyProfile && <EditProfileModal authUser={authUser?.data} />}
           {!isMyProfile && (
             <button
               className="btn btn-outline rounded-full btn-sm"
-              onClick={() => alert('Followed successfully')}
+              onClick={handleFollowUnfollow}
+              disabled={isFollowing}
             >
-              Follow
+              {isFollowing
+                ? 'Loading...'
+                : amIFollowing
+                  ? 'Unfollow'
+                  : 'Follow'}
             </button>
           )}
           {(coverImg || profileImg) && isMyProfile && (
             <button
               className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-              onClick={() => alert('Profile updated successfully')}
+              onClick={handleUpdateImages}
+              disabled={isUpdatingImages}
             >
-              Update
+              {isUpdatingImages ? 'Updating...' : 'Update'}
             </button>
           )}
         </div>
@@ -164,17 +237,23 @@ const ProfilePage = () => {
             )}
             <div className="flex gap-2 items-center">
               <IoCalendarOutline className="w-4 h-4 text-slate-500" />
-              <span className="text-sm text-slate-500">Joined July 2021</span>
+              <span className="text-sm text-slate-500">
+                {formatJoinDate(user.createdAt)}
+              </span>
             </div>
           </div>
 
           <div className="flex gap-2">
             <div className="flex gap-1 items-center">
-              <span className="font-bold text-xs">{user.following?.length || 0}</span>
+              <span className="font-bold text-xs">
+                {user.following?.length || 0}
+              </span>
               <span className="text-slate-500 text-xs">Following</span>
             </div>
             <div className="flex gap-1 items-center">
-              <span className="font-bold text-xs">{user.followers?.length || 0}</span>
+              <span className="font-bold text-xs">
+                {user.followers?.length || 0}
+              </span>
               <span className="text-slate-500 text-xs">Followers</span>
             </div>
           </div>
@@ -201,7 +280,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <Posts />
+        <Posts feedType={feedType} username={username} userId={user._id} />
       </div>
     </div>
   );
